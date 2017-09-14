@@ -10,14 +10,14 @@ class ProtocolUI extends UIPlugin {
   // ** Listeners **
   listen() {
     // State Routes (Ties to Data Controllers used by plugin):
-    this.onStateMsg("protocol-model", "steps", this.onStepsUpdated.bind(this));
-    this.onStateMsg("protocol-model", "step-number", this.onStepNumberUpdated.bind(this));
+    this.onStateMsg("step-model", "steps", this.onStepsUpdated.bind(this));
+    this.onStateMsg("step-model", "step-number", this.onStepNumberUpdated.bind(this));
     this.onStateMsg("protocol-model", "schema", this.onSchemaUpdated.bind(this));
 
-    this.bindPutMsg("protocol-model", "step-number", "update-step-number");
-    this.bindTriggerMsg("protocol-model", "update-step", "update");
-    this.bindTriggerMsg("protocol-model", "delete-step", "delete-step");
-    this.bindTriggerMsg("protocol-model", "insert-step", "insert-step");
+    this.bindPutMsg("step-model", "step-number", "update-step-number");
+    this.bindTriggerMsg("step-model", "update-step", "update");
+    this.bindTriggerMsg("step-model", "delete-step", "delete-step");
+    this.bindTriggerMsg("step-model", "insert-step", "insert-step");
 
     // Implement these::
     this.bindTriggerMsg("protocol-model", "update-protocol-running-state", "update-protocol-running-state");
@@ -120,7 +120,7 @@ class ProtocolUI extends UIPlugin {
   }
 
   onSchemaUpdated(payload) {
-    const schemas = JSON.parse(payload);
+    const schemas = JSON.parse(payload).schema;
     this.schemas = schemas;
   }
 
