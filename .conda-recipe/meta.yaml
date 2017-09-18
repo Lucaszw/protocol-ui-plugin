@@ -1,0 +1,29 @@
+# source will be downloaded prior to filling in jinja templates
+# Example assumes that this folder has setup.py in it
+
+source:
+  git_url: ../
+
+{% if "GIT_DESCRIBE_NUMBER" not in environ %}
+{% set VERSION_NUMBER = "0+unknown"  %}
+{% elif GIT_DESCRIBE_NUMBER > '0'  %}
+{% set VERSION_NUMBER = GIT_DESCRIBE_TAG[1:] + ".post" + GIT_DESCRIBE_NUMBER %}
+{% else  %}
+{% set VERSION_NUMBER = GIT_DESCRIBE_TAG[1:] %}
+{% endif %}
+
+package:
+  name: microdrop.protocol-ui-plugin
+  version: {{ VERSION_NUMBER }}
+
+build:
+  number: 0
+  script: python -m mpm.bin.build --versionNumber {{ VERSION_NUMBER }}
+
+requirements:
+  build:
+    - microdrop-plugin-manager >=0.5.post103-0
+
+about:
+  home: https://github.com/Lucaszw/protocol-ui-plugin
+  license: GPL

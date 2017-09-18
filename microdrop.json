@@ -1,0 +1,6 @@
+{
+  "name": "protocol-ui-plugin",
+  "version": "0.0.1",
+  "type": "ui",
+  "script": "protocol-ui.js"
+}
