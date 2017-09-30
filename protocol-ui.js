@@ -12,7 +12,7 @@ class ProtocolUI extends UIPlugin {
     // State Routes (Ties to Data Controllers used by plugin):
     this.onStateMsg("step-model", "steps", this.onStepsUpdated.bind(this));
     this.onStateMsg("step-model", "step-number", this.onStepNumberUpdated.bind(this));
-    this.onStateMsg("protocol-model", "schema", this.onSchemaUpdated.bind(this));
+    this.onStateMsg("schema-model", "schema", this.onSchemaUpdated.bind(this));
 
     this.bindPutMsg("step-model", "step-number", "update-step-number");
     this.bindTriggerMsg("step-model", "update-step", "update");
@@ -120,7 +120,7 @@ class ProtocolUI extends UIPlugin {
   }
 
   onSchemaUpdated(payload) {
-    const schemas = JSON.parse(payload).schema;
+    const schemas = JSON.parse(payload);
     this.schemas = schemas;
   }
 
@@ -216,7 +216,6 @@ class ProtocolUI extends UIPlugin {
       console.error("Attempted to set step, but table was undefined.");
       return;
     }
-
     const table_d = D(this.table.table().node());
     const rows    = D('tr', table_d);
     // If row undefined then add step
@@ -224,18 +223,15 @@ class ProtocolUI extends UIPlugin {
       console.warn("Attempted to set step beyond table size, creating new step");
       this.addStep();
     }
-
     // Change selected step
     const row_d  = D(this.table.row(number).node());
     rows.forEach((i)=> D(i).setStyles(this.styles.unselected));
     row_d.setStyles(this.styles.selected);
   }
-
   get columns() {
     const schema = this.schema;
     return _.keys(schema);
   }
-
   get headers() {
     const schema = this.schema;
     const headers = _.map(schema, this.createDatatablesHeader);
