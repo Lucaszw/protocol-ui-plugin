@@ -29,16 +29,11 @@ class ProtocolUI extends UIPlugin {
     this.on("next-step-clicked", this.onNextStepClicked.bind(this));
     this.on("play-clicked", this.onPlayClicked.bind(this));
     this.on("delete", this.onDelete.bind(this));
-    D(this.element).on("mouseout", this.onMouseout.bind(this));
   }
 
   // ** Event Handlers (Between action and trigger) **
   onDelete(e) {
     this.trigger("delete-step", this.wrapData("stepNumber", this.step));
-  }
-
-  onMouseout(e) {
-    if (e.target != this.element) return;
   }
 
   onMousedown(msg) {
@@ -389,5 +384,4 @@ class ProtocolUI extends UIPlugin {
 
 }
 
-if (!window.microdropPlugins) window.microdropPlugins = new Map();
 window.microdropPlugins.set("ProtocolUI", ProtocolUI);
