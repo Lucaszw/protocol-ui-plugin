@@ -1,0 +1,22 @@
+{
+  "name": "protocol-ui-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "protocol-ui.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lucaszw/protocol-ui-plugin.git"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/Lucaszw/protocol-ui-plugin/issues"
+  },
+  "homepage": "https://github.com/Lucaszw/protocol-ui-plugin#readme",
+  "dependencies": {
+    "html2canvas": "^0.5.0-beta4"
+  }
+}

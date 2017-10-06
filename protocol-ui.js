@@ -13,22 +13,20 @@ class ProtocolUI extends UIPlugin {
     this.onStateMsg("step-model", "steps", this.onStepsUpdated.bind(this));
     this.onStateMsg("step-model", "step-number", this.onStepNumberUpdated.bind(this));
     this.onStateMsg("schema-model", "schema", this.onSchemaUpdated.bind(this));
-
+    
     this.bindPutMsg("step-model", "step-number", "update-step-number");
+
     this.bindTriggerMsg("step-model", "update-step", "update");
     this.bindTriggerMsg("step-model", "delete-step", "delete-step");
     this.bindTriggerMsg("step-model", "insert-step", "insert-step");
-
-    // Implement these::
-    this.bindTriggerMsg("protocol-model", "update-protocol-running-state", "update-protocol-running-state");
-    this.bindTriggerMsg("protocol-model", "change-repeat", "change-repeat");
-
+    
     // Local Updates
     this.on("mousedown", this.onMousedown.bind(this));
-    this.on("prev-step-clicked", this.onPrevStepClicked.bind(this));
-    this.on("next-step-clicked", this.onNextStepClicked.bind(this));
-    this.on("play-clicked", this.onPlayClicked.bind(this));
+    this.on("prev-step", this.onPrev.bind(this));
+    this.on("next-step", this.onNext.bind(this));
     this.on("delete", this.onDelete.bind(this));
+
+    this.bindSignalMsg("screenshot", "send-screenshot");
   }
 
   // ** Event Handlers (Between action and trigger) **
@@ -55,7 +53,7 @@ class ProtocolUI extends UIPlugin {
     if (schema.type == "number")  this.activateSpinner(msg);
   }
 
-  onNextStepClicked(e) {
+  onNext(e) {
     const lastStep = this.data.length - 1;
     if (this.step == lastStep)
       this.trigger("insert-step",
@@ -65,22 +63,11 @@ class ProtocolUI extends UIPlugin {
                    this.wrapData("stepNumber", this.step+1));
   }
 
-  onPlayClicked(e) {
-    this.trigger("update-protocol-running-state",
-                 this.wrapData("stepNumber", this.step));
-  }
-
-  onPrevStepClicked(e) {
+  onPrev(e) {
     let prevStep;
     if (this.step == 0) prevStep = this.data.length -1;
     if (this.step != 0) prevStep = this.step-1;
     this.trigger("update-step-number", this.wrapData("stepNumber", prevStep));
-  }
-
-  onRepeatChanged(msg) {
-    const val = parseInt(msg.target.value);
-    this.trigger("change-repeat",
-                 this.wrapData("repeat-val", val));
   }
 
   onUpdate(key,val,stepNumber) {
@@ -88,10 +75,15 @@ class ProtocolUI extends UIPlugin {
     this.trigger("update", this.wrapData("data", data));
   }
 
-  onProtocolChanged(payload) {
-    const protocol = JSON.parse(payload);
-    const step_options = protocol.steps;
-    this.updateSteps(step_options);
+  takeScreenshot(payload, timeout=500) {
+    setTimeout(()=> {
+      html2canvas(this.element).then((canvas) => {
+        const img = canvas.toDataURL()
+        // const ctx = canvas.getContext("2d");
+        // const dat = ctx.getImageData(0,0,canvas.width, canvas.height);
+        this.trigger("send-screenshot", img);      
+      });
+    }, timeout);
   }
 
   onStepNumberUpdated(payload) {
@@ -106,12 +98,6 @@ class ProtocolUI extends UIPlugin {
   onRepeatsChanged(payload) {
     const val = JSON.parse(payload);
     this.repeats = val;
-  }
-
-  onProtocolStateChanged(payload){
-    const state = JSON.parse(payload);
-    if (state == "running") this.controls.playbtn.innerText = "Pause";
-    if (state == "paused")  this.controls.playbtn.innerText = "Play";
   }
 
   onSchemaUpdated(payload) {
@@ -306,29 +292,21 @@ class ProtocolUI extends UIPlugin {
 
   updateTable() {
     _.each(this.data, this.updateRow.bind(this));
+    this.takeScreenshot();    
   }
 
   // ** Initializers **
   Controls() {
     const controls = new Object();
 
-    controls.leftbtn  = D("<button type='button'>Prev</button>");
-    controls.playbtn  = D("<button type='button'>Play</button>");
-    controls.rightbtn = D("<button type='button'>Next</button>");
-    controls.repeatLabel = D("<label for='repeatCount'>Number of Repeats:</label>");
-    controls.repeatField = D("<input type='number' id='repeatCount' min='1' value='1' />");
-    controls.repeatLabel.setStyles(this.styles.label);
+    controls.leftbtn  = $("<button type='button'>Prev</button>");
+    controls.rightbtn = $("<button type='button'>Next</button>");
 
-    controls.leftbtn.on("click", event => this.trigger("prev-step-clicked",event));
-    controls.playbtn.on("click", event => this.trigger("play-clicked",event));
-    controls.rightbtn.on("click", event => this.trigger("next-step-clicked",event));
-    controls.repeatField.on("blur", event => this.onRepeatChanged(event));
+    controls.leftbtn.on("click", e => this.trigger("prev-step",e));
+    controls.rightbtn.on("click", e => this.trigger("next-step",e));
 
-    this.element.appendChild(controls.leftbtn.el);
-    this.element.appendChild(controls.playbtn.el);
-    this.element.appendChild(controls.rightbtn.el);
-    this.element.appendChild(controls.repeatLabel.el);
-    this.element.appendChild(controls.repeatField.el);
+    this.element.appendChild(controls.leftbtn[0]);
+    this.element.appendChild(controls.rightbtn[0]);
 
     return controls;
   }
@@ -373,6 +351,7 @@ class ProtocolUI extends UIPlugin {
 
     // Add empty row with default data:
     dataTable.row.add(this.DefaultRow()).draw();
+    this.takeScreenshot();
     return dataTable
   }
 
