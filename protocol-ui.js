@@ -4,7 +4,6 @@ class ProtocolUI extends UIPlugin {
     this.controls = this.Controls();
     this.data = new Array();
     this.initialSteps = null;
-    this.listen();
   }
 
   // ** Listeners **
@@ -55,12 +54,13 @@ class ProtocolUI extends UIPlugin {
 
   onNext(e) {
     const lastStep = this.data.length - 1;
-    if (this.step == lastStep)
-      this.trigger("insert-step",
-                   this.wrapData("stepNumber", lastStep));
-    if (this.step != lastStep)
-      this.trigger("update-step-number",
-                   this.wrapData("stepNumber", this.step+1));
+    if (this.step == lastStep) {
+      this.trigger("insert-step", this.wrapData("stepNumber", lastStep));
+    }
+
+    if (this.step != lastStep) {
+      this.trigger("update-step-number", this.wrapData("stepNumber", this.step+1));
+    }
   }
 
   onPrev(e) {
@@ -78,10 +78,8 @@ class ProtocolUI extends UIPlugin {
   takeScreenshot(payload, timeout=500) {
     setTimeout(()=> {
       html2canvas(this.element).then((canvas) => {
-        const img = canvas.toDataURL()
-        // const ctx = canvas.getContext("2d");
-        // const dat = ctx.getImageData(0,0,canvas.width, canvas.height);
-        this.trigger("send-screenshot", img);      
+        const img = canvas.toDataURL
+        this.trigger("send-screenshot", img);
       });
     }, timeout);
   }
@@ -102,6 +100,7 @@ class ProtocolUI extends UIPlugin {
 
   onSchemaUpdated(payload) {
     const schemas = JSON.parse(payload);
+    delete schemas.__head__;
     this.schemas = schemas;
   }
 
@@ -292,7 +291,7 @@ class ProtocolUI extends UIPlugin {
 
   updateTable() {
     _.each(this.data, this.updateRow.bind(this));
-    this.takeScreenshot();    
+    // this.takeScreenshot();
   }
 
   // ** Initializers **
@@ -351,7 +350,7 @@ class ProtocolUI extends UIPlugin {
 
     // Add empty row with default data:
     dataTable.row.add(this.DefaultRow()).draw();
-    this.takeScreenshot();
+    // this.takeScreenshot();
     return dataTable
   }
 
