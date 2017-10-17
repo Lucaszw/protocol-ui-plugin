@@ -4,6 +4,7 @@ class ProtocolUI extends UIPlugin {
     this.controls = this.Controls();
     this.data = new Array();
     this.initialSteps = null;
+    this.microdrop = new MicrodropAsync();
   }
 
   // ** Listeners **
@@ -12,28 +13,21 @@ class ProtocolUI extends UIPlugin {
     this.onStateMsg("step-model", "steps", this.onStepsUpdated.bind(this));
     this.onStateMsg("step-model", "step-number", this.onStepNumberUpdated.bind(this));
     this.onStateMsg("schema-model", "schema", this.onSchemaUpdated.bind(this));
-    
-    this.bindPutMsg("step-model", "step-number", "update-step-number");
 
-    this.bindTriggerMsg("step-model", "update-step", "update");
-    this.bindTriggerMsg("step-model", "delete-step", "delete-step");
-    this.bindTriggerMsg("step-model", "insert-step", "insert-step");
-    
     // Local Updates
     this.on("mousedown", this.onMousedown.bind(this));
     this.on("prev-step", this.onPrev.bind(this));
     this.on("next-step", this.onNext.bind(this));
     this.on("delete", this.onDelete.bind(this));
-
-    this.bindSignalMsg("screenshot", "send-screenshot");
   }
 
   // ** Event Handlers (Between action and trigger) **
-  onDelete(e) {
-    this.trigger("delete-step", this.wrapData("stepNumber", this.step));
+  async onDelete(e) {
+    const stepNumber = await this.microdrop.steps.currentStepNumber();
+    return (await this.microdrop.steps.deleteStep(stepNumber));
   }
 
-  onMousedown(msg) {
+  async onMousedown(msg) {
     window.msg = msg;
     if (msg.target.nodeName != "TD") return;
     const src     = this.table.column(msg.target).dataSrc();
@@ -42,7 +36,7 @@ class ProtocolUI extends UIPlugin {
     // If step not selected, change step and exit
     const step = this.table.row(msg.target)[0][0];
     if (step != this.step){
-      this.trigger("update-step-number", this.wrapData("stepNumber",step));
+      await this.microdrop.steps.putStepNumber(step);
       return;
     }
 
@@ -50,39 +44,37 @@ class ProtocolUI extends UIPlugin {
     if (!schema) return;
     if (schema.type == "boolean") this.activateCheckbox(msg);
     if (schema.type == "number")  this.activateSpinner(msg);
+    return;
   }
 
-  onNext(e) {
-    const lastStep = this.data.length - 1;
-    if (this.step == lastStep) {
-      this.trigger("insert-step", this.wrapData("stepNumber", lastStep));
+  async onNext(e) {
+    const steps = await this.microdrop.steps.steps();
+    const stepNumber = await this.microdrop.steps.currentStepNumber();
+    const lastStep = steps.length - 1;
+
+    if (stepNumber == lastStep) {
+      return (await this.microdrop.steps.insertStep(lastStep));
     }
 
-    if (this.step != lastStep) {
-      this.trigger("update-step-number", this.wrapData("stepNumber", this.step+1));
+    if (stepNumber != lastStep) {
+      return (await this.microdrop.steps.putStepNumber(stepNumber+1))
     }
   }
 
-  onPrev(e) {
+  async onPrev(e) {
+    const steps = await this.microdrop.steps.steps();
+    const stepNumber = await this.microdrop.steps.currentStepNumber();
     let prevStep;
-    if (this.step == 0) prevStep = this.data.length -1;
-    if (this.step != 0) prevStep = this.step-1;
-    this.trigger("update-step-number", this.wrapData("stepNumber", prevStep));
+    if (this.step == 0) prevStep = steps.length -1;
+    if (this.step != 0) prevStep = stepNumber-1;
+    return (await this.microdrop.steps.putStepNumber(prevStep));
   }
 
-  onUpdate(key,val,stepNumber) {
+  async onUpdate(key,val,stepNumber) {
     const data = {stepNumber: stepNumber, key: key, val: val};
-    this.trigger("update", this.wrapData("data", data));
+    return (await this.microdrop.steps.updateStep(key, val, stepNumber));
   }
 
-  takeScreenshot(payload, timeout=500) {
-    setTimeout(()=> {
-      html2canvas(this.element).then((canvas) => {
-        const img = canvas.toDataURL
-        this.trigger("send-screenshot", img);
-      });
-    }, timeout);
-  }
 
   onStepNumberUpdated(payload) {
     this.step = JSON.parse(payload).stepNumber;
@@ -291,7 +283,6 @@ class ProtocolUI extends UIPlugin {
 
   updateTable() {
     _.each(this.data, this.updateRow.bind(this));
-    // this.takeScreenshot();
   }
 
   // ** Initializers **
@@ -350,7 +341,6 @@ class ProtocolUI extends UIPlugin {
 
     // Add empty row with default data:
     dataTable.row.add(this.DefaultRow()).draw();
-    // this.takeScreenshot();
     return dataTable
   }
 
